@@ -1,0 +1,12 @@
+﻿# Python
+__pycache__/
+*.pyc
+
+# Poetry venv (in project)
+.venv/
+
+# Env files
+.env
+
+# Streamlit
+.streamlit/

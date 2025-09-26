@@ -1,0 +1,46 @@
+[project]
+name = "auto-research"
+version = "0.1.0"
+description = "Market research dashboard"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = "^3.11"
+dependencies = [
+]
+packages = [{ include = "auto_research" }]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.core.dependencies]
+pandas = "^2.3.2"
+yfinance = "^0.2.66"
+feedparser = "^6.0.12"
+streamlit = "^1.50.0"
+python-dotenv = "^1.1.1"
+
+
+[tool.poetry.group.macro.dependencies]
+fredapi = "^0.5.2"
+
+
+[tool.poetry.group.sentiment.dependencies]
+vadersentiment = "^3.3.2"
+
+
+[tool.poetry.group.db.dependencies]
+sqlmodel = ">=0.0.22"
+sqlalchemy = ">=2"
+aiosqlite = "^0.21.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.9.0"
+ruff = "^0.13.2"
+isort = "^6.0.1"
+pytest = "^8.4.2"
+
