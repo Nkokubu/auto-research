@@ -9,6 +9,8 @@ license = {text = "MIT"}
 readme = "README.md"
 requires-python = "^3.11"
 dependencies = [
+    "feedparser (>=6.0.12,<7.0.0)",
+    "python-dateutil (>=2.9.0.post0,<3.0.0)"
 ]
 packages = [{ include = "auto_research" }]
 
