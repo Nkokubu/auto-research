@@ -3,12 +3,17 @@ from auto_research.config import FRED_API_KEY, WATCHLIST
 from auto_research.prices import latest_prices
 from auto_research.news import top_headlines
 from auto_research.macro import macro_dataframe
+from auto_research.news import top_headlines, add_headline_sentiment  # make sure this import is present
+import io
+from auto_research.db import init_db, save_prices_snapshot, save_news_snapshot
+
 import datetime as dt
 import ast
 import re
 
 st.set_page_config(page_title="Auto Research", layout="wide")
 st.title("Auto Research – Dashboard")
+init_db()
 
 def _clean_symbols(csv_text: str) -> list[str]:
     raw = [t.strip().upper() for t in (csv_text or "").split(",")]
@@ -59,7 +64,12 @@ with tabs[1]:
 
     if not symbols:
         st.info("No tickers yet. Add symbols in the sidebar (e.g., TSLA) and click the button.")
-    run_prices = st.button("Fetch latest prices", key="fetch_prices_btn")
+
+    c1, c2, c3 = st.columns([1,1,3])
+    with c1:
+        run_prices = st.button("Fetch latest prices", key="fetch_prices_btn")
+    with c2:
+        save_prices = st.button("Save snapshot", key="save_prices_btn")
 
     if run_prices and symbols:
         try:
@@ -68,8 +78,24 @@ with tabs[1]:
                 st.info("No data returned. Try different tickers or check your internet.")
             else:
                 st.dataframe(df_prices, use_container_width=True)
+
+                # Download CSV of the fetched data
+                csv_bytes = df_prices.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    "Download CSV",
+                    data=csv_bytes,
+                    file_name="prices_snapshot.csv",
+                    mime="text/csv",
+                    key="download_prices_csv",
+                )
+
+                # Save last 30 rows to DB if user clicks
+                if save_prices:
+                    n = save_prices_snapshot(df_prices)
+                    st.success(f"Saved {n} price rows to the database.")
         except Exception as e:
             st.error(f"Error fetching prices: {e}")
+
 
 with tabs[2]:
     st.subheader("🗞️ Top News – Tagged by Ticker")
@@ -123,7 +149,35 @@ with tabs[2]:
                 if df_news.empty:
                     st.info("No tagged headlines for your tickers. Increase lookback or add broader keywords (e.g., 'Tesla').")
                 else:
-                    st.dataframe(df_news, use_container_width=True)
+                    # ✅ Add VADER sentiment and a badge column
+                    df_news = add_headline_sentiment(df_news, text_col="title")
+                    badge_map = {
+                        "Positive": "👍 Positive",
+                        "Neutral": "😐 Neutral",
+                        "Negative": "👎 Negative",
+                    }
+                    df_news["sentiment_badge"] = df_news["sentiment"].map(badge_map)
+
+                    # Optional: pick a tidy column order
+                    cols = ["published", "title", "sentiment_badge", "tickers", "link", "sentiment_score"]
+                    cols = [c for c in cols if c in df_news.columns]
+                    st.dataframe(df_news[cols], use_container_width=True)
+                if not df_news.empty:
+                    # Download current news as CSV
+                    csv_bytes_news = df_news.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        "Download CSV",
+                        data=csv_bytes_news,
+                        file_name="news_snapshot.csv",
+                        mime="text/csv",
+                        key="download_news_csv",
+                    )
+
+                    # Save to DB (last 30 rows)
+                    if st.button("Save snapshot", key="save_news_btn"):
+                        n = save_news_snapshot(df_news)
+                        st.success(f"Saved {n} news rows to the database.")
+
         except Exception as e:
             st.error(f"Error: {e}")
 

@@ -14,7 +14,10 @@ dependencies = [
     "streamlit (>=1.50.0,<2.0.0)",
     "pandas (>=2.3.3,<3.0.0)",
     "yfinance (>=0.2.66,<0.3.0)",
-    "python-dotenv (>=1.1.1,<2.0.0)"
+    "python-dotenv (>=1.1.1,<2.0.0)",
+    "vadersentiment (>=3.3.2,<4.0.0)",
+    "sqlmodel (>=0.0.27,<0.0.28)",
+    "sqlalchemy (>=2.0.43,<3.0.0)"
 ]
 packages = [{ include = "auto_research" }]
 

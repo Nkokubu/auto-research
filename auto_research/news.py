@@ -9,6 +9,9 @@ import feedparser
 feedparser.USER_AGENT = "AutoResearch/0.1 (+https://github.com/Nkokubu/auto-research)"
 import pandas as pd
 from dateutil import parser as dtparse
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+_analyzer = SentimentIntensityAnalyzer()
+
 
 # Sensible defaults (you can pass your own feed list to the function too)
 DEFAULT_FEEDS = {
@@ -143,3 +146,26 @@ def top_headlines(
     if max_items:
         df = df.head(max_items)
     return df.reset_index(drop=True)
+
+def _vader_label(compound: float) -> str:
+    if compound >= 0.05:
+        return "Positive"
+    if compound <= -0.05:
+        return "Negative"
+    return "Neutral"
+
+def add_headline_sentiment(df: pd.DataFrame, text_col: str = "title") -> pd.DataFrame:
+    """
+    Add VADER sentiment columns for a headline/title column.
+    Adds:
+      - sentiment_score (float, VADER compound)
+      - sentiment (str: Positive/Neutral/Negative)
+    """
+    if df is None or df.empty or text_col not in df.columns:
+        return df if df is not None else pd.DataFrame()
+
+    out = df.copy()
+    scores = out[text_col].fillna("").map(lambda t: _analyzer.polarity_scores(str(t))["compound"])
+    out["sentiment_score"] = scores
+    out["sentiment"] = scores.map(_vader_label)
+    return out
